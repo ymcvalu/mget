@@ -81,6 +81,28 @@ func draw(w io.Writer, t string, fs, dl int64) {
 	}
 
 	fmt.Fprintf(w, "]\033[0m")
-	w.Write([]byte(fmt.Sprintf(" \033[34m%d%% [%d/%d]\033[0m\n", percent, dl, fs)))
+	w.Write([]byte(fmt.Sprintf(" \033[34m%3d%% [%s/%s]\033[0m\n", percent, sizeUnit(dl), sizeUnit(fs))))
 	return
+}
+
+const (
+	KB = 1 << 10
+	MB = 1 << 20
+	GB = 1 << 30
+)
+
+func sizeUnit(bs int64) string {
+	var ss string
+	switch {
+	case bs < KB*2/3:
+		ss = fmt.Sprintf("%6dB", bs)
+	case bs < MB*2/3:
+		ss = fmt.Sprintf("%6.2fKB", float64((bs*100)/KB)/100.0)
+	case bs < GB*2/3:
+		ss = fmt.Sprintf("%6.2fMB", float64((bs*100)/MB)/100.0)
+	default:
+		ss = fmt.Sprintf("%6.2fGB", float64((bs*100)/GB)/100.0)
+	}
+
+	return ss
 }

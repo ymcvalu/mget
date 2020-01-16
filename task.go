@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+var (
+	// size of physic page
+	PhysicPageSize = int64(os.Getpagesize())
+	// size of disk sector
+	DiskBlockSize = int64(512)
+)
+
 type task struct {
 	url  string
 	path string
@@ -52,7 +59,7 @@ func NewTask(url, path string, nw int) (*task, error) {
 			} else if err != nil {
 				return err
 			}
-			t.path = t.path + "_1"
+			t.path = dupName(t.path)
 		}
 
 		fd, err := os.Create(t.path)
@@ -73,11 +80,16 @@ func NewTask(url, path string, nw int) (*task, error) {
 		return nil, err
 	}
 
+	for nw > 1 && t.fs/int64(nw) < PhysicPageSize {
+		nw--
+	}
+
 	if nw > 1 {
 		var (
-			off         int64 = 0
-			chuckSz           = t.fs / int64(nw)
-			lastChuckSz       = t.fs - int64(nw-1)*chuckSz
+			off int64 = 0
+			// page size aligned
+			chuckSz     = (t.fs / int64(nw)) & ^PhysicPageSize
+			lastChuckSz = t.fs - int64(nw-1)*chuckSz
 		)
 
 		t.subs = make([]*subTask, 0, nw)
@@ -166,4 +178,16 @@ func (t *task) draw(w io.Writer) {
 		sub.drawProcess(w)
 	}
 	draw(w, "-total-", t.fs, all_dl_sz)
+}
+
+func dupName(fname string) string {
+	dot := len(fname)
+	for i := len(fname) - 1; i > 0; i-- {
+		if fname[i] == '.' {
+			dot = i
+			break
+		}
+	}
+
+	return fmt.Sprintf("%s_1%s", fname[:dot], fname[dot:])
 }

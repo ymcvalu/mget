@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli"
-	"mget"
+	"github.com/ymcvalu/mget"
 	"net/url"
 	"os"
 	"strings"
