@@ -132,6 +132,7 @@ func (t *task) exec() error {
 		})
 	}
 
+	defer t.mp.Unmap()
 	return t.wg.Wait()
 }
 
